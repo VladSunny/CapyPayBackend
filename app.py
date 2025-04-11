@@ -13,7 +13,7 @@ supabase: Client = create_client(supabase_url, supabase_key)
 
 app = Flask(__name__)
 
-CORS(app, origins=["http://localhost:5173/", "https://capy-pay.netlify.app/"])
+CORS(app, origins=["http://localhost:5173", "https://capy-pay.netlify.app"])
 
 def get_data():
     response = (

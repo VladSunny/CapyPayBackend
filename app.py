@@ -1,8 +1,10 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 import os
 from supabase import create_client, Client
 from io import StringIO
 import pandas as pd
+
 
 supabase_url = os.getenv("SUPABASE_URL")
 supabase_key = os.getenv("SUPABASE_KEY")
@@ -10,6 +12,8 @@ supabase_key = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(supabase_url, supabase_key)
 
 app = Flask(__name__)
+
+CORS(app, origins=["http://localhost:5173/", "https://capy-pay.netlify.app/"])
 
 def get_data():
     response = (

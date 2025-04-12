@@ -93,5 +93,56 @@ def get_data_price_quantity_line_chart(uuid):
 
     return jsonify(chart_data)
 
+@app.route('/api/data/price-quantity/pie-chart/<uuid>', methods=['GET'])
+def get_data_price_quantity_pie_chart(uuid):
+    # Получение параметров start_date и end_date из запроса
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    df = get_data()
+
+    df = df[df['uuid'] == uuid][['quantity', 'price', 'tags', 'purchase_date']]
+    df['tags'] = df['tags'].str.strip('{}').str.split(',')
+    df = df.explode('tags')
+
+    # Фильтрация по диапазону дат, если параметры указаны
+    if start_date and end_date:
+        df = df[(df['purchase_date'] >= start_date) & (df['purchase_date'] <= end_date)]
+
+    # Группировка по тегам и суммирование
+    grouped = df.groupby('tags').agg({'quantity': 'sum', 'price': 'sum'}).reset_index()
+
+    # Подготовка данных для Chart.js
+    labels = grouped['tags'].tolist()
+    
+    # Данные для Quantity pie chart
+    quantity_dataset = {
+        "data": grouped['quantity'].tolist(),
+        "backgroundColor": [caramel_latte_palette[i % len(caramel_latte_palette)]["backgroundColor"] for i in range(len(labels))],
+        "borderColor": [caramel_latte_palette[i % len(caramel_latte_palette)]["borderColor"] for i in range(len(labels))]
+    }
+
+    # Данные для Price pie chart
+    price_dataset = {
+        "data": grouped['price'].tolist(),
+        "backgroundColor": [caramel_latte_palette[i % len(caramel_latte_palette)]["backgroundColor"] for i in range(len(labels))],
+        "borderColor": [caramel_latte_palette[i % len(caramel_latte_palette)]["borderColor"] for i in range(len(labels))]
+    }
+
+    # Формирование JSON
+    chart_data = {
+        "quantity": {
+            "labels": labels,
+            "datasets": [quantity_dataset]
+        },
+        "price": {
+            "labels": labels,
+            "datasets": [price_dataset]
+        }
+    }
+
+    return jsonify(chart_data)
+    
+
 if __name__ == '__main__':
     app.run(debug=True)

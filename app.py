@@ -33,8 +33,8 @@ def get_data():
 
     return df
 
-@app.route('/api/data/price-quantity/<uuid>', methods=['GET'])
-def get_data_price_quantity(uuid):
+@app.route('/api/data/price-quantity/line-chart/<uuid>', methods=['GET'])
+def get_data_price_quantity_line_chart(uuid):
     # Получение параметров start_date и end_date из запроса
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')

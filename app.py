@@ -35,8 +35,16 @@ def get_data():
 
 @app.route('/api/data/price-quantity/<uuid>', methods=['GET'])
 def get_data_price_quantity(uuid):
+    # Получение параметров start_date и end_date из запроса
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
     df = get_data()
     df = df[df['uuid'] == uuid][['product_name', 'quantity', 'price', 'purchase_date']].drop_duplicates(keep='first')
+
+    # Фильтрация по диапазону дат, если параметры указаны
+    if start_date and end_date:
+        df = df[(df['purchase_date'] >= start_date) & (df['purchase_date'] <= end_date)]
 
     tmp = df.groupby(['product_name', 'purchase_date']).sum().reset_index().sort_values(by='purchase_date')
 
@@ -80,8 +88,6 @@ def get_data_price_quantity(uuid):
     }
 
     return jsonify(chart_data)
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)

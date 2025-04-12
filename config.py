@@ -1,15 +1,17 @@
 caramel_latte_palette = [
-    # Сохраняем оригинальные 3 цвета
+    # Теплые оттенки (карамельные/земляные)
     {"backgroundColor": "rgba(210, 105, 30, 0.6)", "borderColor": "rgba(210, 105, 30, 1)"},  # Карамельный
-    {"backgroundColor": "rgba(160, 82, 45, 0.6)", "borderColor": "rgba(160, 82, 45, 1)"},  # Темно-карамельный
-    {"backgroundColor": "rgba(139, 69, 19, 0.6)", "borderColor": "rgba(139, 69, 19, 1)"},  # Кофе с молоком
-    
-    # Новые контрастные цвета
-    {"backgroundColor": "rgba(75, 54, 33, 0.6)", "borderColor": "rgba(75, 54, 33, 1)"},     # Шоколадный
-    {"backgroundColor": "rgba(101, 67, 33, 0.6)", "borderColor": "rgba(101, 67, 33, 1)"},   # Коричневый
-    {"backgroundColor": "rgba(150, 90, 62, 0.6)", "borderColor": "rgba(150, 90, 62, 1)"},    # Медный
+    {"backgroundColor": "rgba(160, 82, 45, 0.6)", "borderColor": "rgba(160, 82, 45, 1)"},   # Тёмно-коричневый
     {"backgroundColor": "rgba(196, 142, 72, 0.6)", "borderColor": "rgba(196, 142, 72, 1)"}, # Золотистый
-    {"backgroundColor": "rgba(85, 40, 12, 0.6)", "borderColor": "rgba(85, 40, 12, 1)"},     # Темный шоколад
-    {"backgroundColor": "rgba(226, 146, 67, 0.6)", "borderColor": "rgba(226, 146, 67, 1)"}, # Апельсиновый
-    {"backgroundColor": "rgba(169, 113, 66, 0.6)", "borderColor": "rgba(169, 113, 66, 1)"}, # Карамельно-ореховый
+    
+    # Холодные оттенки (для контраста)
+    {"backgroundColor": "rgba(70, 130, 180, 0.6)", "borderColor": "rgba(70, 130, 180, 1)"}, # Стальной синий
+    {"backgroundColor": "rgba(95, 158, 160, 0.6)", "borderColor": "rgba(95, 158, 160, 1)"}, # Морская волна
+    {"backgroundColor": "rgba(106, 90, 205, 0.6)", "borderColor": "rgba(106, 90, 205, 1)"},  # Приглушённый фиолетовый
+    
+    # Нейтральные, но контрастные
+    {"backgroundColor": "rgba(85, 107, 47, 0.6)", "borderColor": "rgba(85, 107, 47, 1)"},   # Оливковый
+    {"backgroundColor": "rgba(139, 0, 0, 0.6)", "borderColor": "rgba(139, 0, 0, 1)"},       # Тёмно-красный (не кислотный)
+    {"backgroundColor": "rgba(47, 79, 79, 0.6)", "borderColor": "rgba(47, 79, 79, 1)"},     # Серо-зелёный
+    {"backgroundColor": "rgba(188, 143, 143, 0.6)", "borderColor": "rgba(188, 143, 143, 1)"} # Розовато-коричневый
 ]

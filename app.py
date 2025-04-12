@@ -5,10 +5,14 @@ from supabase import create_client, Client
 from io import StringIO
 import pandas as pd
 from config import caramel_latte_palette
+import dotenv
 
+dotenv.load_dotenv()
 
 supabase_url = os.getenv("SUPABASE_URL")
 supabase_key = os.getenv("SUPABASE_KEY")
+
+print(supabase_key)
 
 supabase: Client = create_client(supabase_url, supabase_key)
 
@@ -24,7 +28,7 @@ def get_data():
         .execute()
     )
 
-    df = pd.read_csv(StringIO(response.data), index_col=0)
+    df = pd.read_csv(StringIO(response.data), index_col=0, parse_dates=['purchase_date'])
     df.drop(columns=['created_at'], inplace=True)
 
     return df
@@ -34,10 +38,10 @@ def get_data_price_quantity(uuid):
     df = get_data()
     df = df[df['uuid'] == uuid][['product_name', 'quantity', 'price', 'purchase_date']]
 
-    tmp = df.groupby(['product_name', 'purchase_date']).sum().reset_index()
+    tmp = df.groupby(['product_name', 'purchase_date']).sum().reset_index().sort_values(by='purchase_date')
 
     # Уникальные даты
-    labels = tmp['purchase_date'].unique().tolist()
+    labels = tmp['purchase_date'].astype(str).unique().tolist()
 
     # Подготовка данных для Quantity
     quantity_datasets = []

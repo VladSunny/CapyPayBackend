@@ -40,20 +40,24 @@ def get_data_price_quantity(uuid):
     end_date = request.args.get('end_date')
 
     df = get_data()
-    df = df[df['uuid'] == uuid][['product_name', 'quantity', 'price', 'purchase_date']].drop_duplicates(keep='first')
+    # df = df[df['uuid'] == uuid][['product_name', 'quantity', 'price', 'purchase_date']].drop_duplicates(keep='first')
+
+    df = df[df['uuid'] == uuid][['quantity', 'price', 'tags', 'purchase_date']].drop_duplicates(keep='first')
+    df['tags'] = df['tags'].str.strip('{}').str.split(',')
+    df = df.explode('tags')
 
     # Фильтрация по диапазону дат, если параметры указаны
     if start_date and end_date:
         df = df[(df['purchase_date'] >= start_date) & (df['purchase_date'] <= end_date)]
 
-    tmp = df.groupby(['product_name', 'purchase_date']).sum().reset_index().sort_values(by='purchase_date')
+    tmp = df.groupby(['tags', 'purchase_date']).sum().reset_index().sort_values(by='purchase_date')
 
     # Уникальные даты
     labels = tmp['purchase_date'].astype(str).unique().tolist()
 
     # Подготовка данных для Quantity
     quantity_datasets = []
-    for i, (product_name, group) in enumerate(tmp.groupby('product_name')):
+    for i, (product_name, group) in enumerate(tmp.groupby('tags')):
         color = caramel_latte_palette[i % len(caramel_latte_palette)]
         quantity_datasets.append({
             "label": product_name,
@@ -65,7 +69,7 @@ def get_data_price_quantity(uuid):
 
     # Подготовка данных для Price
     price_datasets = []
-    for i, (product_name, group) in enumerate(tmp.groupby('product_name')):
+    for i, (product_name, group) in enumerate(tmp.groupby('tags')):
         color = caramel_latte_palette[i % len(caramel_latte_palette)]
         price_datasets.append({
             "label": product_name,

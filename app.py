@@ -36,7 +36,7 @@ def get_data():
 @app.route('/api/data/price-quantity/<uuid>', methods=['GET'])
 def get_data_price_quantity(uuid):
     df = get_data()
-    df = df[df['uuid'] == uuid][['product_name', 'quantity', 'price', 'purchase_date']]
+    df = df[df['uuid'] == uuid][['product_name', 'quantity', 'price', 'purchase_date']].drop_duplicates(keep='first')
 
     tmp = df.groupby(['product_name', 'purchase_date']).sum().reset_index().sort_values(by='purchase_date')
 

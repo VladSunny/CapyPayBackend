@@ -1,4 +1,4 @@
-caramel_latte_contrast_palette = [
+caramel_latte_palette = [
     # Сохраняем оригинальные 3 цвета
     {"backgroundColor": "rgba(210, 105, 30, 0.6)", "borderColor": "rgba(210, 105, 30, 1)"},  # Карамельный
     {"backgroundColor": "rgba(160, 82, 45, 0.6)", "borderColor": "rgba(160, 82, 45, 1)"},  # Темно-карамельный

@@ -4,6 +4,7 @@ import os
 from supabase import create_client, Client
 from io import StringIO
 import pandas as pd
+from config import caramel_latte_palette
 
 
 supabase_url = os.getenv("SUPABASE_URL")
@@ -40,18 +41,26 @@ def get_data_price_quantity(uuid):
 
     # Подготовка данных для Quantity
     quantity_datasets = []
-    for product_name, group in tmp.groupby('product_name'):
+    for i, (product_name, group) in enumerate(tmp.groupby('product_name')):
+        color = caramel_latte_palette[i % len(caramel_latte_palette)]
         quantity_datasets.append({
             "label": product_name,
-            "data": group.set_index('purchase_date')['quantity'].reindex(labels, fill_value=0).tolist()
+            "data": group.set_index('purchase_date')['quantity'].reindex(labels, fill_value=0).tolist(),
+            "backgroundColor": color["backgroundColor"],
+            "borderColor": color["borderColor"],
+            "fill": False
         })
 
     # Подготовка данных для Price
     price_datasets = []
-    for product_name, group in tmp.groupby('product_name'):
+    for i, (product_name, group) in enumerate(tmp.groupby('product_name')):
+        color = caramel_latte_palette[i % len(caramel_latte_palette)]
         price_datasets.append({
             "label": product_name,
-            "data": group.set_index('purchase_date')['price'].reindex(labels, fill_value=0).tolist()
+            "data": group.set_index('purchase_date')['price'].reindex(labels, fill_value=0).tolist(),
+            "backgroundColor": color["backgroundColor"],
+            "borderColor": color["borderColor"],
+            "fill": False
         })
 
     # Формирование JSON

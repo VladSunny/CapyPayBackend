@@ -142,6 +142,45 @@ def get_data_price_quantity_pie_chart(uuid):
     }
 
     return jsonify(chart_data)
+
+@app.route('/api/data/price-general/line-chart/<uuid>', methods=['GET'])
+def get_data_price_general_line_chart(uuid):
+    # Получение параметров start_date и end_date из запроса
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    df = get_data()
+
+    df = df[df['uuid'] == uuid][['price', 'purchase_date']]
+
+    # Фильтрация по диапазону дат, если параметры указаны
+    if start_date and end_date:
+        df = df[(df['purchase_date'] >= start_date) & (df['purchase_date'] <= end_date)]
+
+    # Группировка по дате и суммирование цен
+    grouped = df.groupby('purchase_date').sum().reset_index().sort_values(by='purchase_date')
+
+    # Уникальные даты для меток
+    labels = grouped['purchase_date'].astype(str).tolist()
+
+    # Подготовка данных для Price
+    price_dataset = {
+        "label": "Total Price",
+        "data": grouped['price'].tolist(),
+        "backgroundColor": caramel_latte_palette[0]["backgroundColor"],
+        "borderColor": caramel_latte_palette[0]["borderColor"],
+        "fill": False
+    }
+
+    # Формирование JSON
+    chart_data = {
+        "price": {
+            "labels": labels,
+            "datasets": [price_dataset]
+        }
+    }
+
+    return jsonify(chart_data)
     
 
 if __name__ == '__main__':

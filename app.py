@@ -98,6 +98,9 @@ def get_data_recommendations(uuid):
     gender = user_profile['gender'].values[0][0].upper()
     salary = int(user_profile['salary'].values[0])
 
+    if user_profile.empty:
+        return jsonify({"error": "User profile not found"}), 404
+
     income = assign_income_group(salary)
 
     print(gender, income)
@@ -105,10 +108,8 @@ def get_data_recommendations(uuid):
     array_3d = np.load('spending_array.npy')
 
     value = array_3d[genders.index(gender), income_groups.index(income), category_top20_list.index(category)]
-    print(f"Траты для {gender}, {income}, {category}: {value}")
-
-    if user_profile.empty:
-        return jsonify({"error": "User profile not found"}), 404
+    
+    return jsonify(value)
 
 # get_data_recommendations("47823327-2b0f-48c8-9513-614c3ab5d61a")
 

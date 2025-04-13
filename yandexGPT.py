@@ -16,7 +16,7 @@ prompt = {
     "completionOptions": {
         "stream": False,
         "temperature": 0.5,
-        "maxTokens": "2000"
+        "maxTokens": "4000"
     },
     "messages": [
         {

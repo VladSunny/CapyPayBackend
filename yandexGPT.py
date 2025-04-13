@@ -2,14 +2,13 @@ import requests
 import os
 from dotenv import load_dotenv
 from copy import deepcopy
+import json
 
 # Load environment variables from .env file
 load_dotenv()
 
 ID = os.getenv("GPT_ID")
 KEY = os.getenv("GPT_KEY")
-
-print(ID, KEY)
 
 prompt = {
     "modelUri": f"gpt://{ID}/yandexgpt-lite",
@@ -49,8 +48,11 @@ def send_request(message):
     cur_prompt = deepcopy(prompt)
     cur_prompt["messages"].append({"role": "user", "text": message})
     response = requests.post(url, headers=headers, json=cur_prompt)
-    result = response.text
+    result = json.loads(response.text)['result']['alternatives'][0]['message']['text']
+    # print(result)
     return result
+
+# send_request("Привет!")
 
 # response = requests.post(url, headers=headers, json=prompt)
 # result = response.text

@@ -189,9 +189,9 @@ def get_yandex_gpt():
     if not text:
         return jsonify({"error": "Missing 'text' parameter"}), 400
     
-    print(text)
+    # print(text)
     response = yandexGPT.send_request(text)
-    print(response)
+    # print(response)
     return jsonify(response)
 
 

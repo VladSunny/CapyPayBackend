@@ -21,7 +21,38 @@ app = Flask(__name__)
 
 CORS(app, origins=["http://localhost:5173", "https://capy-pay.netlify.app"])
 
-def get_data():
+genders = ['M', 'F']
+category_top20_list = ['Супермаркеты',
+ 'Дом и ремонт',
+ 'Фастфуд',
+ 'Одежда и обувь',
+ 'Автоуслуги',
+ 'Топливо',
+ 'Рестораны',
+ 'Финансы',
+ 'Медицина',
+ 'Маркетплейсы',
+ 'Различные товары',
+ 'Турагентства',
+ 'Другое',
+ 'Авиабилеты',
+ 'Аптеки',
+ 'Такси',
+ 'Красота',
+ 'Сервис',
+ 'Развлечения',
+ 'Электроника и техника',
+ 'Отели']
+income_ranges = [[1, 450], [451, 700], [701, 1150], [1151, 1625], [1626, 2100], [2101, 2550], [2551, 3000], [3001, 3450], [3451, 4000], [4000, 18000]]
+
+def assign_income_group(income):
+    for i, (low, high) in enumerate(income_ranges):
+        if low <= income <= high:
+            return f"{low}-{high}"
+    return "Unknown"
+
+
+def get_payments_data():
     response = (
         supabase.table("Payments")
         .select("*")
@@ -34,9 +65,39 @@ def get_data():
 
     return df
 
+def get_profiles_data():
+    response = (
+        supabase.table("Profiles")
+        .select("*")
+        .csv()
+        .execute()
+    )
+
+    df = pd.read_csv(StringIO(response.data), index_col=0)
+
+    return df
+
+
+@app.route('/api/data/get_recommendations/<uuid>', methods=['GET'])
+def get_data_recommendations(uuid):
+    df_payments = get_payments_data()
+    df_profiles = get_profiles_data()
+
+    user_profile = df_profiles[df_profiles['uuid'] == uuid]
+    gender = user_profile['gender'].values[0]
+    age = user_profile['age'].values[0]
+    salary = user_profile['salary'].values[0]
+
+    print(gender, age, salary)
+
+    if user_profile.empty:
+        return jsonify({"error": "User profile not found"}), 404
+
+get_data_recommendations("47823327-2b0f-48c8-9513-614c3ab5d61a")
+
 @app.route('/api/data/get-u-tags/<uuid>', methods=['GET'])
 def get_data_unique_tags(uuid):
-    df = get_data()
+    df = get_payments_data()
     unique_tags = df[df['uuid'] == uuid]['tags'].str.strip('{}').str.split(',').explode().unique().tolist()
     return jsonify(unique_tags)
 
@@ -46,7 +107,7 @@ def get_data_price_quantity_line_chart(uuid):
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
-    df = get_data()
+    df = get_payments_data()
     # df = df[df['uuid'] == uuid][['product_name', 'quantity', 'price', 'purchase_date']].drop_duplicates(keep='first')
 
     df = df[df['uuid'] == uuid][['quantity', 'price', 'tags', 'purchase_date']].drop_duplicates(keep='first')
@@ -110,7 +171,7 @@ def get_tag_price_quantity_line_chart(uuid):
     if not tag:
         return jsonify({"error": "Tag parameter is required"}), 400
 
-    df = get_data()
+    df = get_payments_data()
     df = df[df['uuid'] == uuid][['quantity', 'price', 'tags', 'purchase_date']].drop_duplicates(keep='first')
     df['tags'] = df['tags'].str.strip('{}').str.split(',')
     df = df.explode('tags')
@@ -165,7 +226,7 @@ def get_data_price_quantity_pie_chart(uuid):
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
-    df = get_data()
+    df = get_payments_data()
 
     df = df[df['uuid'] == uuid][['quantity', 'price', 'tags', 'purchase_date']]
     df['tags'] = df['tags'].str.strip('{}').str.split(',')
@@ -215,7 +276,7 @@ def get_data_price_general_line_chart(uuid):
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
-    df = get_data()
+    df = get_payments_data()
 
     df = df[df['uuid'] == uuid][['price', 'purchase_date']]
 
@@ -254,23 +315,36 @@ def get_yandex_gpt(uuid):
     end_date = request.args.get('end_date')
 
     try:
-        df = get_data()
+        df_payments = get_payments_data()
+        df_profiles = get_profiles_data()
 
-        df = df[df['uuid'] == uuid][['quantity', 'price', 'tags', 'purchase_date']]
-        df['tags'] = df['tags'].str.strip('{}').str.split(',')
-        df = df.explode('tags')
+        # Проверяем профиль, но не прерываем выполнение, если он не найден
+        user_profile = df_profiles[df_profiles['uuid'] == uuid]
+        salary = None
+        if not user_profile.empty:
+            salary = user_profile['salary'].values[0]
+
+        df_payments = df_payments[df_payments['uuid'] == uuid][['quantity', 'price', 'tags', 'purchase_date']]
+        df_payments['tags'] = df_payments['tags'].str.strip('{}').str.split(',')
+        df_payments = df_payments.explode('tags')
 
         if start_date and end_date:
-            df = df[(df['purchase_date'] >= start_date) & (df['purchase_date'] <= end_date)]
+            df_payments = df_payments[(df_payments['purchase_date'] >= start_date) & (df_payments['purchase_date'] <= end_date)]
 
         # Группировка по тегам и датам
-        grouped = df.groupby(['tags', 'purchase_date']).sum().reset_index()
+        grouped = df_payments.groupby(['tags', 'purchase_date']).sum().reset_index()
 
-        # Формируем текстовое описание для GPT
+        # Проверяем, есть ли данные для анализа
         if grouped.empty:
             return jsonify({"error": "Нет данных для анализа за указанный период"}), 404
 
+        # Формируем текстовое описание для GPT
         summary = "Анализируй следующие данные о покупках:\n"
+        # Добавляем зарплату только если профиль найден и зарплата валидна
+        if pd.notna(salary) and isinstance(salary, (int, float)) and salary > 0:
+            summary += f"Зарплата пользователя: {salary} руб.\n\n"
+        # Данные о покупках
+        summary += "Данные о покупках:\n"
         for _, row in grouped.iterrows():
             summary += f"Тег: {row['tags']}, Дата: {row['purchase_date']}, Количество: {row['quantity']}, Цена: {row['price']} руб.\n"
 

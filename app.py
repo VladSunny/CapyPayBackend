@@ -7,6 +7,7 @@ import pandas as pd
 from config import caramel_latte_palette
 import dotenv
 import yandexGPT
+import numpy as np
 
 dotenv.load_dotenv()
 
@@ -22,7 +23,8 @@ app = Flask(__name__)
 CORS(app, origins=["http://localhost:5173", "https://capy-pay.netlify.app"])
 
 genders = ['M', 'F']
-category_top20_list = ['Супермаркеты',
+category_top20_list = [
+ 'Супермаркеты',
  'Дом и ремонт',
  'Фастфуд',
  'Одежда и обувь',
@@ -44,6 +46,8 @@ category_top20_list = ['Супермаркеты',
  'Электроника и техника',
  'Отели']
 income_ranges = [[1, 450], [451, 700], [701, 1150], [1151, 1625], [1626, 2100], [2101, 2550], [2551, 3000], [3001, 3450], [3451, 4000], [4000, 18000]]
+income_groups = ['1-450', '1151-1625', '1626-2100', '2101-2550', '2551-3000', '3001-3450', '3451-4000', '4000-18000', '451-700', '701-1150', 'Unknown']
+array_3d = np.load('spending_array.npy')
 
 def assign_income_group(income):
     for i, (low, high) in enumerate(income_ranges):
@@ -80,20 +84,33 @@ def get_profiles_data():
 
 @app.route('/api/data/get_recommendations/<uuid>', methods=['GET'])
 def get_data_recommendations(uuid):
-    df_payments = get_payments_data()
+    # df_payments = get_payments_data()
     df_profiles = get_profiles_data()
+    category = request.args.get('tag')
+
+    print(category)
+    print(category_top20_list)
+
+    if category not in category_top20_list:
+        return jsonify({"error": "Category not found"}), 404
 
     user_profile = df_profiles[df_profiles['uuid'] == uuid]
-    gender = user_profile['gender'].values[0]
-    age = user_profile['age'].values[0]
-    salary = user_profile['salary'].values[0]
+    gender = user_profile['gender'].values[0][0].upper()
+    salary = int(user_profile['salary'].values[0])
 
-    print(gender, age, salary)
+    income = assign_income_group(salary)
+
+    print(gender, income)
+
+    array_3d = np.load('spending_array.npy')
+
+    value = array_3d[genders.index(gender), income_groups.index(income), category_top20_list.index(category)]
+    print(f"Траты для {gender}, {income}, {category}: {value}")
 
     if user_profile.empty:
         return jsonify({"error": "User profile not found"}), 404
 
-get_data_recommendations("47823327-2b0f-48c8-9513-614c3ab5d61a")
+# get_data_recommendations("47823327-2b0f-48c8-9513-614c3ab5d61a")
 
 @app.route('/api/data/get-u-tags/<uuid>', methods=['GET'])
 def get_data_unique_tags(uuid):

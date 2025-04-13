@@ -10,6 +10,7 @@ load_dotenv()
 ID = os.getenv("GPT_ID")
 KEY = os.getenv("GPT_KEY")
 
+# Базовый промпт для анализа покупок
 prompt = {
     "modelUri": f"gpt://{ID}/yandexgpt-lite",
     "completionOptions": {
@@ -20,23 +21,15 @@ prompt = {
     "messages": [
         {
             "role": "system",
-            "text": "Ты ассистент дроид, способный помочь в галактических приключениях."
-        },
-        # {
-        #     "role": "user",
-        #     "text": "Привет, Дроид! Мне нужна твоя помощь, чтобы узнать больше о Силе. Как я могу научиться ее использовать?"
-        # },
-        # {
-        #     "role": "assistant",
-        #     "text": "Привет! Чтобы овладеть Силой, тебе нужно понять ее природу. Сила находится вокруг нас и соединяет всю галактику. Начнем с основ медитации."
-        # },
-        # {
-        #     "role": "user",
-        #     "text": "Хорошо, а как насчет строения светового меча? Это важная часть тренировки джедая. Как мне создать его?"
-        # }
+            "text": """Ты финансовый аналитик, который помогает пользователю анализировать их покупки. 
+            На основе данных о покупках (теги, количество, цена, даты) ты должен:
+            1. Определить наиболее популярные категории покупок.
+            2. Выявить тренды расходов (например, рост или снижение трат в определенных категориях).
+            3. Дать рекомендации по оптимизации расходов (например, где можно сэкономить).
+            Ответ должен быть структурированным, кратким и понятным. Используй примеры из данных, если они есть."""
+        }
     ]
 }
-
 
 url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
 headers = {
@@ -48,12 +41,11 @@ def send_request(message):
     cur_prompt = deepcopy(prompt)
     cur_prompt["messages"].append({"role": "user", "text": message})
     response = requests.post(url, headers=headers, json=cur_prompt)
-    result = json.loads(response.text)['result']['alternatives'][0]['message']['text']
-    # print(result)
-    return result
+    if response.status_code == 200:
+        result = json.loads(response.text)['result']['alternatives'][0]['message']['text']
+        return result
+    else:
+        raise Exception(f"Ошибка API: {response.status_code}, {response.text}")
 
-# send_request("Привет!")
-
-# response = requests.post(url, headers=headers, json=prompt)
-# result = response.text
-# print(result)
+# Пример использования
+# send_request("Анализируй данные: тег 'еда' - 5 покупок, 1000 руб; тег 'одежда' - 2 покупки, 3000 руб.")

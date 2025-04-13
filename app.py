@@ -183,17 +183,42 @@ def get_data_price_general_line_chart(uuid):
 
     return jsonify(chart_data)
 
-@app.route('/api/yandex_gpt', methods=['GET'])
-def get_yandex_gpt():
-    text = request.args.get('text')  # Получаем параметр 'text' из query string
-    if not text:
-        return jsonify({"error": "Missing 'text' parameter"}), 400
-    
-    # print(text)
-    response = yandexGPT.send_request(text)
-    # print(response)
-    return jsonify(response)
+@app.route('/api/yandex_gpt/<uuid>', methods=['GET'])
+def get_yandex_gpt(uuid):
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
 
+    try:
+        df = get_data()
+
+        df = df[df['uuid'] == uuid][['quantity', 'price', 'tags', 'purchase_date']]
+        df['tags'] = df['tags'].str.strip('{}').str.split(',')
+        df = df.explode('tags')
+
+        if start_date and end_date:
+            df = df[(df['purchase_date'] >= start_date) & (df['purchase_date'] <= end_date)]
+
+        # Группировка по тегам и датам
+        grouped = df.groupby(['tags', 'purchase_date']).sum().reset_index()
+
+        # Формируем текстовое описание для GPT
+        if grouped.empty:
+            return jsonify({"error": "Нет данных для анализа за указанный период"}), 404
+
+        summary = "Анализируй следующие данные о покупках:\n"
+        for _, row in grouped.iterrows():
+            summary += f"Тег: {row['tags']}, Дата: {row['purchase_date']}, Количество: {row['quantity']}, Цена: {row['price']} руб.\n"
+
+        # Отправляем запрос в Yandex GPT
+        gpt_response = yandexGPT.send_request(summary)
+
+        # Возвращаем результат
+        return jsonify({
+            "analysis": gpt_response
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # const text = "Hello world! How are you?";
 # const url = `http://localhost:5000/api/yandex_gpt?text=${encodeURIComponent(text)}`;

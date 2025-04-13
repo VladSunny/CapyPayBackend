@@ -6,6 +6,7 @@ from io import StringIO
 import pandas as pd
 from config import caramel_latte_palette
 import dotenv
+import yandexGPT
 
 dotenv.load_dotenv()
 
@@ -181,7 +182,27 @@ def get_data_price_general_line_chart(uuid):
     }
 
     return jsonify(chart_data)
+
+@app.route('/api/yandex_gpt', methods=['GET'])
+def get_yandex_gpt():
+    text = request.args.get('text')  # Получаем параметр 'text' из query string
+    if not text:
+        return jsonify({"error": "Missing 'text' parameter"}), 400
     
+    print(text)
+    response = yandexGPT.send_request(text)
+    print(response)
+    return jsonify(response)
+
+
+# const text = "Hello world! How are you?";
+# const url = `http://localhost:5000/api/yandex_gpt?text=${encodeURIComponent(text)}`;
+
+# fetch(url)
+#   .then(response => response.json())
+#   .then(data => console.log(data))
+#   .catch(error => console.error('Error:', error));
+
 
 if __name__ == '__main__':
     app.run(debug=True)

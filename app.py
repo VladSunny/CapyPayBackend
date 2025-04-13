@@ -34,6 +34,12 @@ def get_data():
 
     return df
 
+@app.route('/api/data/get-u-tags/<uuid>', methods=['GET'])
+def get_data_unique_tags(uuid):
+    df = get_data()
+    unique_tags = df[df['uuid'] == uuid]['tags'].str.strip('{}').str.split(',').explode().unique().tolist()
+    return jsonify(unique_tags)
+
 @app.route('/api/data/price-quantity/line-chart/<uuid>', methods=['GET'])
 def get_data_price_quantity_line_chart(uuid):
     # Получение параметров start_date и end_date из запроса
@@ -93,6 +99,65 @@ def get_data_price_quantity_line_chart(uuid):
     }
 
     return jsonify(chart_data)
+
+@app.route('/api/data/tag/price-quantity/line-chart/<uuid>', methods=['GET'])
+def get_tag_price_quantity_line_chart(uuid):
+    # Получение параметров start_date, end_date и tag из запроса
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    tag = request.args.get('tag')
+
+    if not tag:
+        return jsonify({"error": "Tag parameter is required"}), 400
+
+    df = get_data()
+    df = df[df['uuid'] == uuid][['quantity', 'price', 'tags', 'purchase_date']].drop_duplicates(keep='first')
+    df['tags'] = df['tags'].str.strip('{}').str.split(',')
+    df = df.explode('tags')
+    df = df[df['tags'] == tag].drop('tags', axis=1)
+
+    # Фильтрация по диапазону дат, если параметры указаны
+    if start_date and end_date:
+        df = df[(df['purchase_date'] >= start_date) & (df['purchase_date'] <= end_date)]
+
+    # Группировка по дате и суммирование
+    tmp = df.groupby('purchase_date').sum().reset_index().sort_values(by='purchase_date')
+
+    # Уникальные даты
+    labels = tmp['purchase_date'].astype(str).unique().tolist()
+
+    # Подготовка данных для Quantity
+    quantity_dataset = {
+        "label": f"Quantity ({tag})",
+        "data": tmp['quantity'].tolist(),
+        "backgroundColor": caramel_latte_palette[0]["backgroundColor"],
+        "borderColor": caramel_latte_palette[0]["borderColor"],
+        "fill": False
+    }
+
+    # Подготовка данных для Price
+    price_dataset = {
+        "label": f"Price ({tag})",
+        "data": tmp['price'].tolist(),
+        "backgroundColor": caramel_latte_palette[1]["backgroundColor"],
+        "borderColor": caramel_latte_palette[1]["borderColor"],
+        "fill": False
+    }
+
+    # Формирование JSON
+    chart_data = {
+        "quantity": {
+            "labels": labels,
+            "datasets": [quantity_dataset]
+        },
+        "price": {
+            "labels": labels,
+            "datasets": [price_dataset]
+        }
+    }
+
+    return jsonify(chart_data)
+
 
 @app.route('/api/data/price-quantity/pie-chart/<uuid>', methods=['GET'])
 def get_data_price_quantity_pie_chart(uuid):
